@@ -2,7 +2,7 @@
 
 #include <LiquidCrystal.h>
 
-int ans = 0;
+float ans = 0;
 
 int getCharInt(char cap[12]){
   int number = 0;
@@ -71,6 +71,10 @@ void matchCallback  (const char * match,
         // Serial.print(num);
         // Serial.print(" Current sum is now ");
         // Serial.println(ans[1]);
+      } else if (func == '/'){
+        ans /= num;
+      } else if (func == '^'){
+        ans = pow(ans, num);
       }
     }
   } // end of for each capture
@@ -82,7 +86,7 @@ void regex(char buf[16]) {
   MatchState ms (buf);
   Serial.println (buf);
   
-  count = ms.GlobalMatch ("([-+*/]*)(%d+)([-+*/])(%d+)", matchCallback);
+  count = ms.GlobalMatch ("([-+*/^]*)(%d+)([-+*/^])(%d+)", matchCallback);
 
   Serial.print ("Found ");
   Serial.print (count);
@@ -102,7 +106,7 @@ Button numPad1 {7, LOW, {'1', '6', '+', 'l', 'C'}, 0};
 Button numPad2 {13, LOW, {'2', '7', '-', 't', 'C'}, 1};
 Button arithematicOpertations {8, LOW, {'3', '8', '*', 's', 'C'}, 2};
 Button mathOperations {10, LOW, {'4', '9', '/', 'c', 'C'}, 3};
-Button clearButton {9, LOW, {'5', '0', '=', 'p', 'C'}, 4};
+Button clearButton {9, LOW, {'5', '0', '=', '^', 'C'}, 4};
 
 int calculator_state = 5;
 char calc_display[16];
@@ -166,8 +170,7 @@ void loop()
       }
       
       lcd.print(resp);
-      calc_display[cursor_pos] = resp;
-      cursor_pos += 1;
+      
       if (resp == 'C'){
         lcd.clear();
         memset(calc_display, 0, 16);
@@ -179,7 +182,21 @@ void loop()
         memset(calc_display, 0, 16);
         lcd.print(ans);
         ans = 0;
-        cursor_pos = 0;
+        cursor_pos = 5;
+      } else if (resp == 's'){
+        regex(calc_display);
+        if (ans == 0){
+          ans = getCharInt(calc_display);
+        }
+        lcd.clear();
+        memset(calc_display, 0, 16);
+        Serial.println(sin(ans * PI / 180));
+        lcd.print(sin(ans * PI / 180));
+        ans = 0;
+        cursor_pos = 5;
+      } else if (resp != 's' || resp != 'c' || resp != 't'){
+        calc_display[cursor_pos] = resp;
+        cursor_pos += 1;
       }
 
       calculator_state = 5;
@@ -204,6 +221,10 @@ void loop()
   lcd.rightToLeft();
   lcd.print(calculator_state);
   lcd.print(":etatS");
+
+  lcd.setCursor(0, 1);
+  lcd.leftToRight();
+  lcd.print(" ");
 
   // Serial.println("Calculator state");
   // Serial.println(calculator_state);
